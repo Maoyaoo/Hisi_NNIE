@@ -27,7 +27,8 @@
 void SAMPLE_IVE_Kcf_HandleSig(HI_S32 s32Signo);
 
 
-WK_RECT_ARRAY_S stRect = {0};
+//WK_RECT_ARRAY_S stRect = {0};
+WK_YOLO_RECT_ARRAY_S stRect = {0};
 
 static SAMPLE_VI_CONFIG_S s_stViConfig = {0};
 static SAMPLE_VO_CONFIG_S s_stVoConfig = {0};
@@ -43,7 +44,7 @@ HI_BOOL s_bVIVOStopSignal;
 
 VIDEO_FRAME_INFO_S *stDetFrmInfo;
 
-
+#if 0
 
 HI_S32 SAMPLE_IVE_DispProcess(VIDEO_FRAME_INFO_S *pstFrameInfo, SAMPLE_RECT_ARRAY_S *pstRect)
 {
@@ -67,6 +68,8 @@ HI_S32 SAMPLE_IVE_DispProcess(VIDEO_FRAME_INFO_S *pstFrameInfo, SAMPLE_RECT_ARRA
 
     return s32Ret;
 }
+
+#endif
 
 
 /******************************************************************************
@@ -108,19 +111,11 @@ static HI_VOID *VIVO_HDMI_Showing(HI_VOID *pArgs)
         
 
 
-        // /*YOLOv3 Detecting*/
-        // s32Ret = yolov3_run(&stExtFrmInfo,&stRect);
-        // if (HI_SUCCESS != s32Ret)
-        // {
-        //     printf("yolov3_run fault!!!\n");
-        //     s_bYOLOv3StopSignal = HI_TRUE;
-        // }
-       
-
         /*VGS Draw rect*/
         #if 1
-
-        get_frame_bdbox(&stRect, stBaseFrmInfo.stVFrame.u32Width, stBaseFrmInfo.stVFrame.u32Height,HI_FALSE);
+         WK_YOLO_RECT_ARRAY_S astRect_u;
+        //get_frame_bdbox(&stRect, stBaseFrmInfo.stVFrame.u32Width, stBaseFrmInfo.stVFrame.u32Height,HI_FALSE);
+        YOLOV3_RECT_TO_DENRMALIZATION(&stRect, &astRect_u, stBaseFrmInfo.stVFrame.u32Width, stBaseFrmInfo.stVFrame.u32Height);
 
         s32Ret = SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect(&stBaseFrmInfo, &stRect, 0x0000FF00);				
         SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS!=s32Ret, BASE_RELEASE,"SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect failed, Error(%#x)!\n", s32Ret);
@@ -178,12 +173,12 @@ static HI_VOID *WK_YOLOV3_Detecting(HI_VOID *pArgs)
 
         #if 1
         /*YOLOv3 Detecting*/
-        s32Ret = yolov3_run(stDetFrmInfo,&stRect);
+        s32Ret = wk_yolov3_run(stDetFrmInfo,&stRect);
         SAMPLE_SVP_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret,YOLOV3_FAIL_0,SAMPLE_SVP_ERR_LEVEL_ERROR,
 	    "Error,yolov3_run failed!\n");
         if (HI_SUCCESS != s32Ret)
         {
-            printf("yolov3_run fault!!!\n");
+            printf("wk_yolov3_run fault!!!\n");
             s_bYOLOv3StopSignal = HI_TRUE;
         }
         #endif
@@ -197,10 +192,10 @@ static HI_VOID *WK_YOLOV3_Detecting(HI_VOID *pArgs)
        
     }
     YOLOV3_FAIL_0:
-        s32Ret = yolov3_clear();
+        s32Ret = wk_yolov3_clear();
         if (HI_SUCCESS != s32Ret)
         {
-             printf("yolov3_clear fault!!!\n");
+             printf("wk_yolov3_clear fault!!!\n");
         }
 
     return NULL;
@@ -461,7 +456,7 @@ int main(int argc, char *argv[])
     step 2: init YOLO NNIE param
     ******************************************/
     #if 1
-    s32Ret = yolov3_load_model(model_path);
+    s32Ret = wk_yolov3_load_model(model_path);
     if (HI_SUCCESS != s32Ret)
     {
         printf("load model fault!\n");
@@ -538,6 +533,7 @@ void SAMPLE_IVE_Kcf_HandleSig(HI_S32 s32Signo)
             pthread_join(s_bVIVOStopSignal, NULL);
             s_bVIVOStopSignal = 0;
         }
+        wk_yolov3_clear();
         SAMPLE_COMM_IVE_StopViVpssVencVo(&s_stViConfig,&s_stYolov3Switch);
         // SAMPLE_COMM_VO_StopVO(&s_stVoConfig);
         // SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, ViChn, VpssGrp);

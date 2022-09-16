@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(NNIE-lite)
+
 
 SET(CMAKE_CXX_STANDARD 11)
 
@@ -41,12 +41,13 @@ SET(CMAKE_C_FLAGS "-Wall -g -Dhi3516cv500 -DHI_XXXX -lpthread -lm -ldl -DISP_V2 
 SET(CMAKE_C_FLAGS_DEBUG "-Wall -ggdb3 -DNM_DEBUG ${CMAKE_C_FLAGS}")
 SET(CMAKE_C_FLAGS_RELEASE  "-Wall -O3  ${CMAKE_C_FLAGS}")
 
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../release)
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../release)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/release)
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/release)
 # ===========================================
 
 # ==================THIRD PARYT==============
 SET(THIRD_PART ${CMAKE_SOURCE_DIR}/third_party)
+
 # Hisi
 SET(HI_ROOT ${THIRD_PART}/hisi)
 SET(HI_INCLUDE ${HI_ROOT}/include)
@@ -55,49 +56,15 @@ MESSAGE("###Third_part is: ${THIRD_PART}")
 # ===========================================
 
 
+
 INCLUDE_DIRECTORIES(include ${HI_INCLUDE})
 
-FILE(GLOB SRC "src/*c" "src/common/*c")
+
+project(NNIE-lite)
+
+ADD_SUBDIRECTORY(src/hi_common)
+ADD_SUBDIRECTORY(src/hi_svp)
+ADD_SUBDIRECTORY(main)
 
 
-# For YOLOv3
-ADD_EXECUTABLE(yolov3_Exe ${SRC} main/nnie_yolov3.c)
-
-LINK_DIRECTORIES(${HI_LIB_DIR})
-
-TARGET_LINK_LIBRARIES(yolov3_Exe pthread dl m
-    ${HI_LIB_DIR}/libmpi.a 
-	${HI_LIB_DIR}/libhdmi.a
-	${HI_LIB_DIR}/lib_hiae.a 
-	${HI_LIB_DIR}/libisp.a 
-	${HI_LIB_DIR}/lib_hidehaze.a 
-	${HI_LIB_DIR}/lib_hidrc.a 
-	${HI_LIB_DIR}/lib_hildci.a 
-	${HI_LIB_DIR}/lib_hicalcflicker.a 
-	${HI_LIB_DIR}/lib_hiawb.a 
-	${HI_LIB_DIR}/libsns_imx327.a 
-	${HI_LIB_DIR}/libsns_imx327_2l.a 
-	${HI_LIB_DIR}/libsns_imx307.a 
-	${HI_LIB_DIR}/libsns_imx307_2l.a 
-	${HI_LIB_DIR}/libsns_imx458.a 
-	${HI_LIB_DIR}/libsns_mn34220.a 
-	${HI_LIB_DIR}/libsns_os05a.a 
-	${HI_LIB_DIR}/libsns_os08a10.a 
-	${HI_LIB_DIR}/libsns_gc2053.a 
-	${HI_LIB_DIR}/libsns_sc4210.a 
-	${HI_LIB_DIR}/libsns_ov12870.a 
-	${HI_LIB_DIR}/libsns_os04b10.a 
-	${HI_LIB_DIR}/libsns_imx415.a
-	${HI_LIB_DIR}/libsns_imx219.a
-    ${HI_LIB_DIR}/libsns_imx274.a
-    ${HI_LIB_DIR}/libsns_imx335.a
-	${HI_LIB_DIR}/libVoiceEngine.a 
-	${HI_LIB_DIR}/libupvqe.a 
-	${HI_LIB_DIR}/libdnvqe.a
-    ${HI_LIB_DIR}/libsecurec.a
-    ${HI_LIB_DIR}/libtde.a
-    ${HI_LIB_DIR}/libive.a
-    ${HI_LIB_DIR}/libmd.a
-    ${HI_LIB_DIR}/libnnie.a)
-    
 

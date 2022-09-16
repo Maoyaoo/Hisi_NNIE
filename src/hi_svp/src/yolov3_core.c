@@ -1,7 +1,5 @@
 #include "yolov3_core.h"
 
-
-
 /******************************************************************************
 * function : Yolov3 software para init
 ******************************************************************************/
@@ -325,7 +323,7 @@ static HI_S32 SAMPLE_SVP_NNIE_Forward(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,
 ******************************************************************************/
 HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
     SVP_BLOB_S *pstDstRoi, SVP_BLOB_S *pstClassRoiNum, HI_FLOAT pf32GetResultThresh,
-    HI_BOOL bPrint,WK_RECT_ARRAY_S *pstRect,
+    HI_BOOL bPrint,WK_YOLO_RECT_ARRAY_S *pstRect,
     HI_U32 u32SrcWidth, HI_U32 u32SrcHeight)
 {
     /*print result, this sample has 81 classes:
@@ -355,20 +353,16 @@ HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
     HI_S32* ps32ClassRoiNum = SAMPLE_SVP_NNIE_CONVERT_64BIT_ADDR(HI_S32,pstClassRoiNum->u64VirAddr);
     HI_U32 u32ClassNum = pstClassRoiNum->unShape.stWhc.u32Width;
     HI_U32 u32RoiNumTmp = 0;
-    //HI_S32 s32XMin = 0,s32YMin= 0,s32XMax = 0,s32YMax = 0;
-    HI_FLOAT s32XMin = 0,s32YMin= 0,s32XMax = 0,s32YMax = 0;
+    HI_S32 s32XMin = 0,s32YMin= 0,s32XMax = 0,s32YMax = 0;
+    // HI_FLOAT s32XMin = 0,s32YMin= 0,s32XMax = 0,s32YMax = 0;
 
- 
     SAMPLE_SVP_CHECK_EXPR_RET(u32ClassNum > WK_YOLOV3_MAX_CLASS_NUM ,HI_ERR_SVP_NNIE_ILLEGAL_PARAM,SAMPLE_SVP_ERR_LEVEL_ERROR,
         "Error(%#x),u32ClassNum(%u) must be less than or equal %u to!\n",HI_ERR_SVP_NNIE_ILLEGAL_PARAM,u32ClassNum, WK_YOLOV3_MAX_CLASS_NUM);
  
-    
-
     pstRect->u32TotalNum = 0;            /*init tolalNum*/
     pstRect->u32ClsNum = u32ClassNum;    /*get class Num*/
     pstRect->au32RoiNum[0] = 0;          /*init ROINum for etch class*/
     u32RoiNumBias += ps32ClassRoiNum[0];
-
 
     for (i = 1; i < u32ClassNum; i++)
     {
@@ -389,43 +383,33 @@ HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
                 {
                     break;
                 }
-                #if 0
+           
                 s32XMin = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM];
                 s32YMin = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 1];
                 s32XMax = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 2];
                 s32YMax = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 3];
-                SAMPLE_SVP_TRACE_INFO("%d %d %d %d %f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
-                #endif
-                /**/
-                s32XMin = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM] / (HI_FLOAT)u32SrcWidth ;
-                s32YMin = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 1] / (HI_FLOAT)u32SrcHeight;
-                s32XMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 2] / (HI_FLOAT)u32SrcWidth;
-                s32YMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 3] / (HI_FLOAT)u32SrcHeight;
+             
+                // s32XMin = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM] / (HI_FLOAT)u32SrcWidth ;
+                // s32YMin = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 1] / (HI_FLOAT)u32SrcHeight;
+                // s32XMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 2] / (HI_FLOAT)u32SrcWidth;
+                // s32YMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 3] / (HI_FLOAT)u32SrcHeight;
 
-                if (bPrint)  /*print result*/
+                /*print result*/
+                if (bPrint)  
                 {
                     printf("s32XMin:%f \ns32YMin:%f \ns32XMax:%f \ns32YMax:%f \nf32Score:%f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
                     //SAMPLE_SVP_TRACE_INFO("%f %f %f %f %f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
                 }
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[0].s32X = s32XMin;
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[0].s32Y = s32YMin;
-
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[1].s32X = s32XMax;
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[1].s32Y = s32YMin;
-
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[2].s32X = s32XMax;
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[2].s32Y = s32YMax;
                 
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[3].s32X = s32XMin;
-                pstRect->astRect[i][u32RoiNumTmp].ast_fPoint[3].s32Y = s32YMax;
-                
+                pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fX = (HI_FLOAT)s32XMin / (HI_FLOAT)u32SrcWidth;
+                pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fY = (HI_FLOAT)s32YMin / (HI_FLOAT)u32SrcHeight;
+                pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fWidth = (HI_FLOAT)(s32XMax - s32XMin) / (HI_FLOAT)u32SrcWidth;
+                pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fHeight = (HI_FLOAT)(s32YMax - s32YMin) / (HI_FLOAT)u32SrcHeight;
                 pstRect->astRect[i][u32RoiNumTmp].f32Score = f32Score;
-
                 u32RoiNumTmp++;
             }
 
         }
-
         pstRect->au32RoiNum[i] = u32RoiNumTmp;
         pstRect->u32TotalNum += u32RoiNumTmp;
         u32RoiNumBias += ps32ClassRoiNum[i];
@@ -503,7 +487,7 @@ int yolov3_param_init(SAMPLE_SVP_NNIE_MODEL_S *pstModel, SAMPLE_SVP_NNIE_CFG_S *
 
 /*Yolov3 inference*/
 int yolov3_inference(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,SAMPLE_SVP_NNIE_YOLOV3_SOFTWARE_PARAM_S *pstSoftWareParam, VIDEO_FRAME_INFO_S *pstExtFrmInfo,
-         WK_RECT_ARRAY_S *pstRect)
+         WK_YOLO_RECT_ARRAY_S *pstRect)
 {
     HI_U32 u32BaseWidth = 0;
     HI_U32 u32BaseHeight = 0;

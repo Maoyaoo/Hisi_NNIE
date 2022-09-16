@@ -1,5 +1,13 @@
 {
     "files.associations": {
-        "yolov3_core.h": "c"
+        "yolov3_core.h": "c",
+        "sample_comm_svp.h": "c",
+        "kcf_core.h": "c",
+        "wk_yolov3.h": "c",
+        "hi_common.h": "c",
+        "hi_type.h": "c",
+        "wk_utils.h": "c",
+        "wk_svp_type.h": "c",
+        "wk_kcf.h": "c"
     }
 }
