@@ -373,7 +373,7 @@ HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
         if(((HI_FLOAT)ps32Score[u32ScoreBias] / SAMPLE_SVP_NNIE_QUANT_BASE >=
             pf32GetResultThresh)  &&  (ps32ClassRoiNum[i] != 0))
         { 
-            printf("==== The %dth class box info====\n", i);
+            printf("==== The %d th class box info====\n", i);
             printf("######Total NUM: %d \n",ps32ClassRoiNum[i]);
             for (j = 0; j < (HI_U32)ps32ClassRoiNum[i]; j++)
             {
@@ -394,19 +394,30 @@ HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
                 // s32XMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 2] / (HI_FLOAT)u32SrcWidth;
                 // s32YMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 3] / (HI_FLOAT)u32SrcHeight;
 
-                /*print result*/
-                if (bPrint)  
-                {
-                    printf("s32XMin:%f \ns32YMin:%f \ns32XMax:%f \ns32YMax:%f \nf32Score:%f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
-                    //SAMPLE_SVP_TRACE_INFO("%f %f %f %f %f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
-                }
-                
                 pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fX = (HI_FLOAT)s32XMin / (HI_FLOAT)u32SrcWidth;
                 pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fY = (HI_FLOAT)s32YMin / (HI_FLOAT)u32SrcHeight;
                 pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fWidth = (HI_FLOAT)(s32XMax - s32XMin) / (HI_FLOAT)u32SrcWidth;
                 pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fHeight = (HI_FLOAT)(s32YMax - s32YMin) / (HI_FLOAT)u32SrcHeight;
                 pstRect->astRect[i][u32RoiNumTmp].f32Score = f32Score;
+                
+
+                /*print result*/
+                if (bPrint)  
+                { 
+                    printf("====================\n");
+                    /*打印正常坐标Xmin，Ymin，XMax，YMax*/
+                    printf("s32XMin:%d \ns32YMin:%d \ns32XMax:%d \ns32YMax:%d \nf32Score:%f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
+                    
+                    /*打印归一化X，Y，W，H*/
+                    // printf("fx:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fX);
+                    // printf("fy:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fY);
+                    // printf("fw:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fWidth);
+                    // printf("fh:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fHeight);
+                    printf("====================\n");
+                    //SAMPLE_SVP_TRACE_INFO("%f %f %f %f %f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
+                }
                 u32RoiNumTmp++;
+
             }
 
         }
@@ -493,8 +504,8 @@ int yolov3_inference(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,SAMPLE_SVP_NNIE_YOLOV
     HI_U32 u32BaseHeight = 0;
     u32BaseWidth = pstExtFrmInfo->stVFrame.u32Width;
     u32BaseHeight = pstExtFrmInfo->stVFrame.u32Height;
-    //printf("###u32W:%d\n",u32BaseWidth);
-    //printf("###u32H:%d\n",u32BaseHeight);
+    // printf("###u32W:%d\n",u32BaseWidth);
+    // printf("###u32H:%d\n",u32BaseHeight);
 
     HI_S32 s32Ret = HI_FAILURE;
     HI_FLOAT f32GetResultThresh = 0.2f;

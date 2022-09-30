@@ -8,6 +8,10 @@
         "hi_type.h": "c",
         "wk_utils.h": "c",
         "wk_svp_type.h": "c",
-        "wk_kcf.h": "c"
+        "wk_kcf.h": "c",
+        "core.hpp": "c",
+        "vector": "cpp",
+        "highgui.hpp": "c"
     }
 }
+

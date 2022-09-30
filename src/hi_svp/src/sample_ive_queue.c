@@ -24,6 +24,9 @@ SAMPLE_IVE_QUEUE_S* SAMPLE_IVE_QueueCreate(HI_S32 s32Len)
 	pstQueueHead->rear = NULL;
 	s_s32MaxQueuelen = s32Len;
 
+	printf("###s_s32CurQueueLen: %d\n",s_s32CurQueueLen);
+	printf("###s_s32MaxQueuelen: %d\n",s_s32MaxQueuelen);
+
 	return pstQueueHead;
 }
 
@@ -104,17 +107,22 @@ HI_S32 SAMPLE_IVE_QueueAddNode(SAMPLE_IVE_QUEUE_S* pstQueueHead, VIDEO_FRAME_INF
 
 	if ((NULL == pstQueueHead) || (NULL == pstFrameInfo))
 	{
+		printf("1111111\n");
 		return QUEUE_NULL_POINTER;
 	}
 
 	if ((s_s32MaxQueuelen != -1) && (s_s32CurQueueLen >= s_s32MaxQueuelen))
 	{
+		printf("2222222\n");
+		printf("s_s32CurQueueLen: %d\n",s_s32CurQueueLen);
+		printf("s_s32MaxQueuelen: %d\n",s_s32MaxQueuelen);
 		return QUEUE_ILLEGAL_STATE;
 	}
 
 	pstQueueNode = (SAMPLE_IVE_NODE_S*)malloc(sizeof(SAMPLE_IVE_NODE_S));
 	if (NULL == pstQueueNode)
 	{
+		printf("333333\n");
 		return QUEUE_OUT_OF_MEMORY;
 	}
 
@@ -132,6 +140,7 @@ HI_S32 SAMPLE_IVE_QueueAddNode(SAMPLE_IVE_QUEUE_S* pstQueueHead, VIDEO_FRAME_INF
 	}
 
 	s_s32CurQueueLen++;
+	printf("add_____s_s32CurQueueLen: %d\n",s_s32CurQueueLen);
 
 	return HI_SUCCESS;
 }

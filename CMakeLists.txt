@@ -47,23 +47,69 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/release)
 
 # ==================THIRD PARYT==============
 SET(THIRD_PART ${CMAKE_SOURCE_DIR}/third_party)
+MESSAGE("###Third_part is: ${THIRD_PART}")
 
 # Hisi
 SET(HI_ROOT ${THIRD_PART}/hisi)
 SET(HI_INCLUDE ${HI_ROOT}/include)
 SET(HI_LIB_DIR ${HI_ROOT}/lib)
-MESSAGE("###Third_part is: ${THIRD_PART}")
+#尝试用set设置海思库
+SET(HI_LIBS 
+	${HI_LIB_DIR}/libmpi.a 
+	${HI_LIB_DIR}/libhdmi.a
+	${HI_LIB_DIR}/lib_hiae.a 
+	${HI_LIB_DIR}/libisp.a 
+	${HI_LIB_DIR}/lib_hidehaze.a 
+	${HI_LIB_DIR}/lib_hidrc.a 
+	${HI_LIB_DIR}/lib_hildci.a 
+	${HI_LIB_DIR}/lib_hicalcflicker.a 
+	${HI_LIB_DIR}/lib_hiawb.a 
+	${HI_LIB_DIR}/libsns_imx327.a 
+	${HI_LIB_DIR}/libsns_imx327_2l.a 
+	${HI_LIB_DIR}/libsns_imx307.a 
+	${HI_LIB_DIR}/libsns_imx307_2l.a 
+	${HI_LIB_DIR}/libsns_imx458.a 
+	${HI_LIB_DIR}/libsns_mn34220.a 
+	${HI_LIB_DIR}/libsns_os05a.a 
+	${HI_LIB_DIR}/libsns_os08a10.a 
+	${HI_LIB_DIR}/libsns_gc2053.a 
+	${HI_LIB_DIR}/libsns_sc4210.a 
+	${HI_LIB_DIR}/libsns_ov12870.a 
+	${HI_LIB_DIR}/libsns_os04b10.a 
+	${HI_LIB_DIR}/libsns_imx415.a
+	${HI_LIB_DIR}/libsns_imx219.a
+	${HI_LIB_DIR}/libsns_imx274.a
+	${HI_LIB_DIR}/libsns_imx335.a
+	${HI_LIB_DIR}/libVoiceEngine.a 
+	${HI_LIB_DIR}/libupvqe.a 
+	${HI_LIB_DIR}/libdnvqe.a
+	${HI_LIB_DIR}/libsecurec.a
+	${HI_LIB_DIR}/libtde.a
+	${HI_LIB_DIR}/libive.a
+	${HI_LIB_DIR}/libmd.a
+	${HI_LIB_DIR}/libnnie.a
+)
+
+
+#Opencv
+SET(OPENCV_ROOT ${THIRD_PART}/opencv_3.4.1)
+SET(OPENCV_INCLUDE ${OPENCV_ROOT}/include)
+SET(OPENCV_LIB_DIR ${OPENCV_ROOT}/lib)
+FILE(GLOB OPENCV_LIBS "${OPENCV_LIB_DIR}/*")
+
+
+
+
+INCLUDE_DIRECTORIES(include ${HI_INCLUDE} ${OPENCV_INCLUDE})
+LINK_DIRECTORIES(${OPENCV_LIB_DIR} ${HI_LIB_DIR})
+
 # ===========================================
-
-
-
-INCLUDE_DIRECTORIES(include ${HI_INCLUDE})
-
 
 project(NNIE-lite)
 
 ADD_SUBDIRECTORY(src/hi_common)
 ADD_SUBDIRECTORY(src/hi_svp)
+ADD_SUBDIRECTORY(src/cv_kalman)
 ADD_SUBDIRECTORY(main)
 
 

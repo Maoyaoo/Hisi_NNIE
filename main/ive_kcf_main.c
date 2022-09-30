@@ -233,7 +233,7 @@ static HI_VOID *WK_YOLOV3_Detecting(HI_VOID *pArgs)
         //s_bYOLOv3StopSignal = HI_TRUE;
         if (HI_SUCCESS != s32Ret)
         {
-             printf("wk_kcf_prm_deinit fault!!!\n");
+            printf("wk_kcf_prm_deinit fault!!!\n");
         }
 
     return NULL;

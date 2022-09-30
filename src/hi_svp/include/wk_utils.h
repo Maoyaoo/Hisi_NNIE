@@ -2,7 +2,7 @@
 #define __WK_UTILS_H__
 
 
-#include "wk_svp_type.h"
+
 
 
 #ifdef __cplusplus
@@ -11,6 +11,7 @@ extern "C"{
 #endif
 #endif /* __cplusplus */
 
+#include "wk_svp_type.h"
 
 
 
@@ -29,10 +30,10 @@ void RECT_TO_POINT(WK_RECT_ARRAY_S *pastRect_u, WK_POINT_ARRAY_S *pastPoint_u);
 
 
 
+void Filter_Object(WK_YOLO_RECT_ARRAY_S *raw_pastRect_f, WK_RECT_ARRAY_S *out_pastRect_f, WK_YOLO_CLASS eClass);
 
 
-
-
+HI_FLOAT WK_CalcIOU(WK_FLOAT_RECT_S *pstRect1, WK_FLOAT_RECT_S *pstRect2);
 
 //HI_VOID Rect_To_Point_Array(IVE_RECT_S24Q8_S astBbox[], HI_U32 u32BboxObjNum, WK_POINT_ARRAY_S *pstRect);
 

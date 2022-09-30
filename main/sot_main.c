@@ -21,13 +21,14 @@
 #include "sample_comm_ive.h"
 
 
-#include "wk_yolov3.h"
+// #include "wk_yolov3.h"
+#include "sot_thread.h"
 
 
 void SAMPLE_IVE_Kcf_HandleSig(HI_S32 s32Signo);
 
 
-WK_RECT_ARRAY_S stRect = {0};
+// WK_RECT_ARRAY_S stRect = {0};
 
 static SAMPLE_VI_CONFIG_S s_stViConfig = {0};
 static SAMPLE_VO_CONFIG_S s_stVoConfig = {0};
@@ -35,178 +36,14 @@ static SAMPLE_VO_CONFIG_S s_stVoConfig = {0};
 static SAMPLE_IVE_SWITCH_S s_stYolov3Switch = {HI_FALSE,HI_FALSE};
 
 
-static pthread_t s_Yolov3_Detect_Thread = 0;
-static pthread_t s_VIVO_HDMI_Show_Thread = 0;
+// static pthread_t s_Yolov3_Detect_Thread = 0;
+// static pthread_t s_VIVO_HDMI_Show_Thread = 0;
 
-HI_BOOL s_bYOLOv3StopSignal;
-HI_BOOL s_bVIVOStopSignal;
+// HI_BOOL s_bYOLOv3StopSignal;
+// HI_BOOL s_bVIVOStopSignal;
 
 VIDEO_FRAME_INFO_S *stDetFrmInfo;
 
-#if 0
-
-HI_S32 SAMPLE_IVE_DispProcess(VIDEO_FRAME_INFO_S *pstFrameInfo, SAMPLE_RECT_ARRAY_S *pstRect)
-{
-    HI_S32 s32Ret;
-    VO_LAYER voLayer = 0;
-    VO_CHN voChn = 0;
-    HI_S32 s32MilliSec = 20000;
-
-    s32Ret = SAMPLE_COMM_VGS_FillRect(pstFrameInfo, pstRect, 0x0000FF00);
-    if (HI_SUCCESS != s32Ret)
-    {
-        SAMPLE_PRT("Error(%#x),SAMPLE_COMM_VGS_FillRect failed!\n", s32Ret);
-    }
-
-    s32Ret = HI_MPI_VO_SendFrame(voLayer, voChn, pstFrameInfo, s32MilliSec);
-    if (HI_SUCCESS != s32Ret)
-    {
-        SAMPLE_PRT("Error(%#x),HI_MPI_VO_SendFrame failed!\n", s32Ret);
-        return s32Ret;
-    } 
-
-    return s32Ret;
-}
-
-#endif
-
-
-/******************************************************************************
- * function : VIVO HDMI display thread entry
- ******************************************************************************/
-static HI_VOID *VIVO_HDMI_Showing(HI_VOID *pArgs)
-{
-    HI_S32 s32Ret;
-
-    VIDEO_FRAME_INFO_S stBaseFrmInfo;
-    VIDEO_FRAME_INFO_S stExtFrmInfo;
-    HI_S32 s32MilliSec = 20000;
-
-    HI_S32 s32VpssGrp = 0;
-    HI_S32 as32VpssChn[] = {VPSS_CHN0, VPSS_CHN1};
-
-    VO_LAYER voLayer = 0;
-    VO_CHN voChn = 0;
-
-   
-    while (HI_FALSE == s_bVIVOStopSignal)
-    {
-        /*vpss 1 416*416 to YOLOv3*/
-        s32Ret = HI_MPI_VPSS_GetChnFrame(s32VpssGrp, as32VpssChn[1], &stExtFrmInfo, s32MilliSec);
-        if(HI_SUCCESS != s32Ret)
-        {
-            SAMPLE_PRT("Error(%#x),HI_MPI_VPSS_GetChnFrame failed, VPSS_GRP(%d), VPSS_CHN(%d)!\n",
-                s32Ret,s32VpssGrp, as32VpssChn[1]);
-            continue;
-        }
-        stDetFrmInfo = &stExtFrmInfo;
-
-        /*vpss 1 1920*1080 to VO*/
-        s32Ret = HI_MPI_VPSS_GetChnFrame(s32VpssGrp, as32VpssChn[0], &stBaseFrmInfo, s32MilliSec);
-        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS!=s32Ret, BASE_RELEASE,
-            "Error(%#x),HI_MPI_VPSS_GetChnFrame failed, VPSS_GRP(%d), VPSS_CHN(%d)!\n",
-            s32Ret,s32VpssGrp, as32VpssChn[0]);
-        
-        
-
-
-        // /*YOLOv3 Detecting*/
-        // s32Ret = yolov3_run(&stExtFrmInfo,&stRect);
-        // if (HI_SUCCESS != s32Ret)
-        // {
-        //     printf("yolov3_run fault!!!\n");
-        //     s_bYOLOv3StopSignal = HI_TRUE;
-        // }
-       
-
-        /*VGS Draw rect*/
-        #if 0
-
-        get_frame_bdbox(&stRect, stBaseFrmInfo.stVFrame.u32Width, stBaseFrmInfo.stVFrame.u32Height,HI_FALSE);
-
-        s32Ret = SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect(&stBaseFrmInfo, &stRect, 0x0000FF00);				
-        SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS!=s32Ret, BASE_RELEASE,"SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect failed, Error(%#x)!\n", s32Ret);
-        #endif
-        
-        /*Show*/
-        s32Ret = HI_MPI_VO_SendFrame(voLayer, voChn, &stBaseFrmInfo, s32MilliSec);
-        if (HI_SUCCESS != s32Ret)
-        {
-            SAMPLE_PRT("Error(%#x),HI_MPI_VO_SendFrame failed!\n", s32Ret);
-            return s32Ret;
-        } 
-
-
-
-    BASE_RELEASE:
-        s32Ret = HI_MPI_VPSS_ReleaseChnFrame(s32VpssGrp,as32VpssChn[0], &stBaseFrmInfo);
-        if (HI_SUCCESS != s32Ret)
-        {
-            SAMPLE_PRT("Error(%#x),HI_MPI_VPSS_ReleaseChnFrame failed,Grp(%d) chn(%d)!\n",
-                s32Ret,s32VpssGrp,as32VpssChn[0]);
-        }
-
-    EXT_RELEASE:
-        s32Ret = HI_MPI_VPSS_ReleaseChnFrame(s32VpssGrp,as32VpssChn[1], &stExtFrmInfo);
-        if (HI_SUCCESS != s32Ret)
-        {
-            SAMPLE_PRT("Error(%#x),HI_MPI_VPSS_ReleaseChnFrame failed,Grp(%d) chn(%d)!\n",
-                s32Ret,s32VpssGrp,as32VpssChn[1]);
-        }
-       
-        
-    }
-
-    return NULL;
-}
-
-
-
-/******************************************************************************
- * function : YoloV3 Detecting and vo display thread entry
- ******************************************************************************/
-static HI_VOID *WK_YOLOV3_Detecting(HI_VOID *pArgs)
-{
-    HI_S32 s32Ret;
-
-    struct timeval tv1;
-    struct timeval tv2;
-    long t1, t2, time;
-
-   
-    while (HI_FALSE == s_bYOLOv3StopSignal)
-    {
-        gettimeofday(&tv1, NULL);
-
-        #if 1
-        /*YOLOv3 Detecting*/
-        s32Ret = yolov3_run(stDetFrmInfo,&stRect);
-        SAMPLE_SVP_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret,YOLOV3_FAIL_0,SAMPLE_SVP_ERR_LEVEL_ERROR,
-	    "Error,yolov3_run failed!\n");
-        if (HI_SUCCESS != s32Ret)
-        {
-            printf("yolov3_run fault!!!\n");
-            s_bYOLOv3StopSignal = HI_TRUE;
-        }
-        #endif
-
-        gettimeofday(&tv2, NULL);
-        t1 = tv2.tv_sec - tv1.tv_sec;
-        t2 = tv2.tv_usec - tv1.tv_usec;
-        time = (long) (t1 * 1000 + t2 / 1000);
-        printf("NNIE inference time : %dms\n", time);
-       
-       
-    }
-    YOLOV3_FAIL_0:
-        s32Ret = yolov3_clear();
-        if (HI_SUCCESS != s32Ret)
-        {
-             printf("yolov3_clear fault!!!\n");
-        }
-
-    return NULL;
-}
 
 
 /******************************************************************************
@@ -419,9 +256,6 @@ END_INIT_0:
 }
 
 
-
-
-
 /******************************************************************************
  * function : YOLOV3 VI TO VO
  ******************************************************************************/
@@ -462,49 +296,17 @@ int main(int argc, char *argv[])
     /******************************************
     step 2: init YOLO NNIE param
     ******************************************/
-    #if 1
-    s32Ret = yolov3_load_model(model_path);
-    if (HI_SUCCESS != s32Ret)
-    {
-        printf("load model fault!\n");
-    }
-    else{
-        printf("load model success!!!!!!!!!\n");
-    }
-    #endif
 
 
     /******************************************
-     step 3: Create work thread
+     step 3: Init And Create work thread
     ******************************************/
-
-    /*VIVO HDMI Thread*/
-    snprintf(acThreadName, 16, "VIVOHDMIShow");
-    prctl(PR_SET_NAME, (unsigned long)acThreadName, 0, 0, 0);
-    pthread_create(&s_VIVO_HDMI_Show_Thread, 0, VIVO_HDMI_Showing, NULL);
-
-
-    /*Detecting Thread*/
-    snprintf(acThreadName, 16, "YOLOv3Detecting");
-    prctl(PR_SET_NAME, (unsigned long)acThreadName, 0, 0, 0);
-    pthread_create(&s_Yolov3_Detect_Thread, 0, WK_YOLOV3_Detecting, NULL);
-
-    
-
+    Sot_Thread_Init();
 
     SAMPLE_PAUSE();
 
-    s_bYOLOv3StopSignal = HI_TRUE;
-    s_bVIVOStopSignal = HI_TRUE;
-
-    pthread_join(s_VIVO_HDMI_Show_Thread, HI_NULL);
-    s_VIVO_HDMI_Show_Thread = 0;
-
-    pthread_join(s_Yolov3_Detect_Thread, NULL);
-    s_Yolov3_Detect_Thread = 0;
-
-
 YOLOV3_FAIL_1:
+    Sot_Thread_DeInit();
     SAMPLE_COMM_IVE_StopViVpssVencVo(&s_stViConfig,&s_stYolov3Switch);
     return 0;
 }
@@ -521,30 +323,8 @@ void SAMPLE_IVE_Kcf_HandleSig(HI_S32 s32Signo)
 
     if (SIGINT == s32Signo || SIGTERM == s32Signo)
     {
-        VI_PIPE ViPipe = 0;
-        VI_CHN ViChn = 0;
-        VPSS_GRP VpssGrp = 0;
-        HI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {1, 1, 0};
+        Sot_Thread_DeInit();
 
-        s_bYOLOv3StopSignal = HI_TRUE;
-        s_bVIVOStopSignal = HI_TRUE;
-       
-        if (0 != s_Yolov3_Detect_Thread)
-        {
-            pthread_join(s_Yolov3_Detect_Thread, NULL);
-            s_Yolov3_Detect_Thread = 0;
-        }
-
-         if (0 != s_bVIVOStopSignal)
-        {
-            pthread_join(s_bVIVOStopSignal, NULL);
-            s_bVIVOStopSignal = 0;
-        }
         SAMPLE_COMM_IVE_StopViVpssVencVo(&s_stViConfig,&s_stYolov3Switch);
-        // SAMPLE_COMM_VO_StopVO(&s_stVoConfig);
-        // SAMPLE_COMM_VI_UnBind_VPSS(ViPipe, ViChn, VpssGrp);
-        // SAMPLE_COMM_VPSS_Stop(VpssGrp, abChnEnable);
-        // SAMPLE_COMM_VI_StopVi(&s_stViConfig);
-        // SAMPLE_COMM_SYS_Exit();
     }
 }

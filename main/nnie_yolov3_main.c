@@ -22,6 +22,7 @@
 
 
 #include "wk_yolov3.h"
+#include "wk_utils.h"
 
 
 void SAMPLE_IVE_Kcf_HandleSig(HI_S32 s32Signo);
@@ -113,11 +114,11 @@ static HI_VOID *VIVO_HDMI_Showing(HI_VOID *pArgs)
 
         /*VGS Draw rect*/
         #if 1
-         WK_YOLO_RECT_ARRAY_S astRect_u;
+         WK_YOLO_RECT_ARRAY_S astRect_u = {0};
         //get_frame_bdbox(&stRect, stBaseFrmInfo.stVFrame.u32Width, stBaseFrmInfo.stVFrame.u32Height,HI_FALSE);
         YOLOV3_RECT_TO_DENRMALIZATION(&stRect, &astRect_u, stBaseFrmInfo.stVFrame.u32Width, stBaseFrmInfo.stVFrame.u32Height);
 
-        s32Ret = SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect(&stBaseFrmInfo, &stRect, 0x0000FF00);				
+        s32Ret = SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect(&stBaseFrmInfo, &astRect_u, 0x0000FF00);				
         SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS!=s32Ret, BASE_RELEASE,"SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect failed, Error(%#x)!\n", s32Ret);
         #endif
         

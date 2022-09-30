@@ -1,11 +1,11 @@
-#include "hi_comm_vgs.h"
-#include "hi_comm_ive.h"
+
 
 #include "wk_utils.h"
 
 
 
-
+#define WK_SVP_MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define WK_SVP_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 
 
@@ -124,7 +124,7 @@ void RECT_TO_DENRMALIZATION(WK_RECT_ARRAY_S *pastRect_f, WK_RECT_ARRAY_S *pastRe
 
         //printf("fH:%f   imgH:%d\n",pastRect_f->astRect[i].stRect_f.fHeight,img_H);
 
-        #if 0
+        #if 1
         printf("NUM:%d\n",i);
         printf("X:%d\n",pastRect_u->astRect[i].stRect_u.uX);
         printf("Y:%d\n",pastRect_u->astRect[i].stRect_u.uY);
@@ -155,14 +155,63 @@ void RECT_TO_POINT(WK_RECT_ARRAY_S *pstRect_u, WK_POINT_ARRAY_S *pstPoint_u)
         int j;
         for( j = 0; j < 4; j++)
         {
-            printf("###NUM %d:  X%d = %d   Y%d = %d\n",i,j,pstPoint_u->astPoint[i].astPoint_u[j].uX,j,pstPoint_u->astPoint[i].astPoint_u[j].uY);
+            printf("###NUM %d:  X%d = %d   Y%d = %d\n",i, j, pstPoint_u->astPoint[i].astPoint_u[j].uX, j, pstPoint_u->astPoint[i].astPoint_u[j].uY);
         }
         #endif
     }
-   
-   
-
     return;
+}
+
+
+void Filter_Object(WK_YOLO_RECT_ARRAY_S *raw_pastRect_f, WK_RECT_ARRAY_S *out_pastRect_f, WK_YOLO_CLASS eClass)
+{
+    int i,j;
+    out_pastRect_f->u16Num = 0;
+    for (i = 0; i < raw_pastRect_f->u32ClsNum; i++)
+    {
+        if(i != eClass)
+        {
+            continue;
+        }
+        for(j = 0; j < raw_pastRect_f->au32RoiNum[i]; j++)
+        {
+            out_pastRect_f->astRect[j].stRect_f.fX = raw_pastRect_f->astRect[i][j].stRect.stRect_f.fX;
+            out_pastRect_f->astRect[j].stRect_f.fY = raw_pastRect_f->astRect[i][j].stRect.stRect_f.fY;
+            out_pastRect_f->astRect[j].stRect_f.fWidth = raw_pastRect_f->astRect[i][j].stRect.stRect_f.fWidth;
+            out_pastRect_f->astRect[j].stRect_f.fHeight = raw_pastRect_f->astRect[i][j].stRect.stRect_f.fHeight;
+            out_pastRect_f->u16Num += 1;
+        }
+    }
+    return;
+}
+
+
+
+HI_FLOAT WK_CalcIOU(WK_FLOAT_RECT_S *pstRect1, WK_FLOAT_RECT_S *pstRect2)
+{
+    HI_FLOAT s32MinX, s32MinY, s32MaxX, s32MaxY;
+    HI_FLOAT fArea1, fArea2, fInterArea, fIou;
+    HI_FLOAT s32Width, s32Height;
+
+    s32MinX = WK_SVP_MAX(pstRect1->fX , pstRect2->fX);
+    s32MinY = WK_SVP_MAX(pstRect1->fY , pstRect2->fY);
+    s32MaxX = WK_SVP_MIN(pstRect1->fX + pstRect1->fWidth, pstRect2->fX + pstRect2->fWidth);
+    s32MaxY = WK_SVP_MIN(pstRect1->fY + pstRect1->fHeight, pstRect2->fY + pstRect2->fHeight);
+
+    s32Width = s32MaxX - s32MinX + 1;
+    s32Height = s32MaxY - s32MinY + 1;
+
+    s32Width = s32Width > 0 ? s32Width : 0;
+    s32Height = s32Height > 0 ? s32Height : 0;
+
+    fInterArea = s32Width * s32Height;
+
+    fArea1 = pstRect1->fWidth * pstRect1->fHeight;
+    fArea2 = pstRect2->fWidth * pstRect2->fHeight;
+
+    fIou = fInterArea / (fArea1 + fArea2 - fInterArea);
+
+    return fIou;
 }
 
 
@@ -266,19 +315,23 @@ void YOLOV3_RECT_TO_DENRMALIZATION(WK_YOLO_RECT_ARRAY_S *pastRect_f, WK_YOLO_REC
     pastRect_u->u32TotalNum = pastRect_f->u32TotalNum;
     pastRect_u->u32ClsNum = pastRect_f->u32ClsNum;
     memcpy(pastRect_u->au32RoiNum,pastRect_f->au32RoiNum,sizeof(pastRect_f->au32RoiNum));
-    if (pastRect_f->u32TotalNum = 0)
+    if (pastRect_f->u32TotalNum == 0)
     {
         return;
     }
     for(i = 0; i < pastRect_f->u32ClsNum; i++)
     {
-        for(j = 0; i < pastRect_f->au32RoiNum[i];j++ )
+        for(j = 0; j < pastRect_f->au32RoiNum[i]; j++ )
         { 
             pastRect_u->astRect[i][j].f32Score = pastRect_f->astRect[i][j].f32Score;
-            pastRect_u->astRect[i][j].stRect.stRect_u.uX = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fX * img_W);
-            pastRect_u->astRect[i][j].stRect.stRect_u.uY = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fY * img_H);
-            pastRect_u->astRect[i][j].stRect.stRect_u.uWidth = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fWidth * img_W);
-            pastRect_u->astRect[i][j].stRect.stRect_u.uHeight = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fHeight * img_H);
+            pastRect_u->astRect[i][j].stRect.stRect_u.uX = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fX * img_W) & (~1);
+            pastRect_u->astRect[i][j].stRect.stRect_u.uY = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fY * img_H) & (~1);
+            pastRect_u->astRect[i][j].stRect.stRect_u.uWidth = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fWidth * img_W) & (~1);
+            pastRect_u->astRect[i][j].stRect.stRect_u.uHeight = (int)(pastRect_f->astRect[i][j].stRect.stRect_f.fHeight * img_H) & (~1);
+            // printf("### X:%d\n",pastRect_u->astRect[i][j].stRect.stRect_u.uX);
+            // printf("### Y:%d\n",pastRect_u->astRect[i][j].stRect.stRect_u.uY);
+            // printf("### W:%d\n",pastRect_u->astRect[i][j].stRect.stRect_u.uWidth);
+            // printf("### H:%d\n",pastRect_u->astRect[i][j].stRect.stRect_u.uHeight);
         }
 
     }  
@@ -318,14 +371,19 @@ HI_S32 SAMPLE_COMM_SVP_NNIE_YOLOV3_FillRect(VIDEO_FRAME_INFO_S *pstFrmInfo, WK_Y
 
     for (i = 0; i < pstRect_u->u32ClsNum; i++)
     {
+        if(pstRect_u->au32RoiNum[i] == 0)
+        {
+            continue;
+        }
+
         for (j = 0; j < pstRect_u->au32RoiNum[i]; j++)
         {
-            WK_RECT_ARRAY_S astRect_u;
-            WK_POINT_ARRAY_S astPoint_u;
+            WK_RECT_ARRAY_S astRect_u = {0};
+            WK_POINT_ARRAY_S astPoint_u = {0};
             astRect_u.u16Num = 1;
-            astRect_u.astRect[1].stRect_u = pstRect_u->astRect[i][j].stRect.stRect_u;
+            astRect_u.astRect[0].stRect_u = pstRect_u->astRect[i][j].stRect.stRect_u;
             RECT_TO_POINT(&astRect_u, &astPoint_u);
-            memcpy(stVgsAddCover.stQuadRangle.stPoint, astPoint_u.astPoint[1].astPoint_u, sizeof(astPoint_u.astPoint[1].astPoint_u));
+            memcpy(stVgsAddCover.stQuadRangle.stPoint, astPoint_u.astPoint[0].astPoint_u, sizeof(astPoint_u.astPoint[0].astPoint_u));
             s32Ret = HI_MPI_VGS_AddCoverTask(VgsHandle, &stVgsTask, &stVgsAddCover);
             if (s32Ret != HI_SUCCESS)
             {
