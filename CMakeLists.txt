@@ -38,6 +38,7 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 #海思编译的CFLAGS
 SET(CMAKE_C_FLAGS "-Wall -g -Dhi3516cv500 -DHI_XXXX -lpthread -lm -ldl -DISP_V2 -lstdc++ -Wall -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4 -fno-aggressive-loop-optimizations -ldl -ffunction-sections -fdata-sections -O2 -fstack-protector-strong -fPIC -Wall -DHI_RELEASE -Wno-error=implicit-function-declaration -DVER_X=1 -DVER_Y=0 -DVER_Z=0 -DVER_P=0 -DVER_B=10 -DUSER_BIT_32 -DKERNEL_BIT_32 -Wno-date-time -DSENSOR0_TYPE=GALAXYCORE_GC2053_MIPI_2M_30FPS_10BIT -DSENSOR1_TYPE=GALAXYCORE_GC2053_MIPI_2M_30FPS_10BIT -DHI_ACODEC_TYPE_INNER -DHI_ACODEC_TYPE_HDMI")
+#SET(CMAKE_C_FLAGS "-Wall -g -Dhi3516cv500 -DHI_XXXX -lpthread -lm -ldl -DISP_V2 -lstdc++ -Wall -mcpu=cortex-a7 -mfloat-abi=softfp -mfpu=neon-vfpv4 -fno-aggressive-loop-optimizations -ldl -ffunction-sections -fdata-sections -O2 -fstack-protector-strong -fPIC -Wall -DHI_RELEASE -Wno-error=implicit-function-declaration -DVER_X=1 -DVER_Y=0 -DVER_Z=0 -DVER_P=0 -DVER_B=10 -DUSER_BIT_32 -DKERNEL_BIT_32 -Wno-date-time -DSENSOR0_TYPE=SONY_IMX378_MIPI_8M_30FPS_10BIT -DSENSOR1_TYPE=SONY_IMX378_MIPI_8M_30FPS_10BIT -DHI_ACODEC_TYPE_INNER -DHI_ACODEC_TYPE_HDMI")
 SET(CMAKE_C_FLAGS_DEBUG "-Wall -ggdb3 -DNM_DEBUG ${CMAKE_C_FLAGS}")
 SET(CMAKE_C_FLAGS_RELEASE  "-Wall -O3  ${CMAKE_C_FLAGS}")
 
@@ -80,6 +81,7 @@ SET(HI_LIBS
 	${HI_LIB_DIR}/libsns_imx219.a
 	${HI_LIB_DIR}/libsns_imx274.a
 	${HI_LIB_DIR}/libsns_imx335.a
+	${HI_LIB_DIR}/libsns_imx378.a
 	${HI_LIB_DIR}/libVoiceEngine.a 
 	${HI_LIB_DIR}/libupvqe.a 
 	${HI_LIB_DIR}/libdnvqe.a

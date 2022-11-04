@@ -22,13 +22,13 @@
 
 
 // #include "wk_yolov3.h"
-#include "sot_thread.h"
+#include "wk_sot_thread.h"
 
 
 void SAMPLE_IVE_Kcf_HandleSig(HI_S32 s32Signo);
 
 
-// WK_RECT_ARRAY_S stRect = {0};
+
 
 static SAMPLE_VI_CONFIG_S s_stViConfig = {0};
 static SAMPLE_VO_CONFIG_S s_stVoConfig = {0};
@@ -36,8 +36,6 @@ static SAMPLE_VO_CONFIG_S s_stVoConfig = {0};
 static SAMPLE_IVE_SWITCH_S s_stYolov3Switch = {HI_FALSE,HI_FALSE};
 
 
-// static pthread_t s_Yolov3_Detect_Thread = 0;
-// static pthread_t s_VIVO_HDMI_Show_Thread = 0;
 
 // HI_BOOL s_bYOLOv3StopSignal;
 // HI_BOOL s_bVIVOStopSignal;

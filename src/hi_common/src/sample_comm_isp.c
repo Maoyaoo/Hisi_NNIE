@@ -127,6 +127,17 @@ ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX335_MIPI_4M_30FPS_WDR2TO1 =
     0,
 };
 
+//add
+ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX378_MIPI_8M_30FPS =
+{
+    {0, 0, 3840, 2160},
+    {3840, 2160},
+    30,
+    BAYER_RGGB,
+    WDR_MODE_NONE,
+    0,
+};
+
 ISP_PUB_ATTR_S ISP_PUB_ATTR_IMX458_MIPI_8M_30FPS =
 {
     {0, 0, 3840, 2160},
@@ -358,6 +369,10 @@ HI_S32 SAMPLE_COMM_ISP_GetIspAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, ISP_PUB_ATTR
 
         case SONY_IMX335_MIPI_4M_30FPS_10BIT_WDR2TO1:
             memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX335_MIPI_4M_30FPS_WDR2TO1, sizeof(ISP_PUB_ATTR_S));
+            break;
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:  
+            memcpy(pstPubAttr, &ISP_PUB_ATTR_IMX378_MIPI_8M_30FPS, sizeof(ISP_PUB_ATTR_S));
             break;
 
         case SMART_SC4210_MIPI_3M_30FPS_12BIT:

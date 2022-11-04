@@ -130,8 +130,18 @@ typedef enum wk_YOLO_CLASS
     Background,
     Person,
     Bicycle,
-    Car
+    Car,
+    Motorbike,
+    Aeroplane,
+    Bus,
+    Train,
+    Truck,
+    Boat,
+    Traffic_Light
 }WK_YOLO_CLASS;
+
+
+
 
 /*print result, this sample has 81 classes:
         class 0:background      class 1:person       class 2:bicycle         class 3:car            class 4:motorbike      class 5:aeroplane

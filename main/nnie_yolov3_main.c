@@ -39,6 +39,7 @@ static SAMPLE_IVE_SWITCH_S s_stYolov3Switch = {HI_FALSE,HI_FALSE};
 
 static pthread_t s_Yolov3_Detect_Thread = 0;
 static pthread_t s_VIVO_HDMI_Show_Thread = 0;
+static pthread_t s_delay_Thread = 0;
 
 HI_BOOL s_bYOLOv3StopSignal;
 HI_BOOL s_bVIVOStopSignal;
@@ -72,6 +73,28 @@ HI_S32 SAMPLE_IVE_DispProcess(VIDEO_FRAME_INFO_S *pstFrameInfo, SAMPLE_RECT_ARRA
 
 #endif
 
+//=======save YUV======
+void save_yuv(unsigned char* pYuvBuf,int width,int height)
+{
+
+	int bufLen = width * height *3/2;
+
+	FILE* pFileOut = fopen("/root/Workspace/Haisi/Project/NNIE_WK/release/xx.yuv", "wb");
+	if (!pFileOut)
+	{
+		printf("pFileOut open error \n");
+		system("pause");
+		exit(-1);
+	}
+
+	fwrite(pYuvBuf, bufLen, 1, pFileOut);
+	fclose(pFileOut);
+
+	printf("save yuv file success!!!\n");
+
+}
+
+
 
 /******************************************************************************
  * function : VIVO HDMI display thread entry
@@ -89,6 +112,26 @@ static HI_VOID *VIVO_HDMI_Showing(HI_VOID *pArgs)
 
     VO_LAYER voLayer = 0;
     VO_CHN voChn = 0;
+
+
+
+    //********SAVE YUV PRM*********
+    HI_U32 phy_addr,size;
+    HI_U32 mHeight,mWidth,u32UvHeight;
+    HI_CHAR* pUserPageAddr[2] = {HI_NULL,HI_NULL};
+
+    unsigned int w, h, offset, scale;
+    char* pVBufVirt_Y;
+    char* pVBufVirt_C;
+	char* pMemContent;
+
+    HI_U8 yuv_buf[1920*1080*2];
+    unsigned char TmpBuff[2048]; //If this value is too small and the image is big, this memory may not be enough
+
+    size = 0;
+    int savecount = 0;
+    //*************************
+
 
    
     while (HI_FALSE == s_bVIVOStopSignal)
@@ -110,6 +153,86 @@ static HI_VOID *VIVO_HDMI_Showing(HI_VOID *pArgs)
             s32Ret,s32VpssGrp, as32VpssChn[0]);
         
         
+            /***************Save YUV******************/
+    #if 0
+
+            printf("@@@@@@stExtFrmInfo.stVFrame.enPixelFormat:%d\n",stExtFrmInfo.stVFrame.enPixelFormat);
+      
+			if (PIXEL_FORMAT_YVU_SEMIPLANAR_420 == stExtFrmInfo.stVFrame.enPixelFormat)
+		    {
+                printf("KkkkkkkKKKKKK\n");
+		        size = (stExtFrmInfo.stVFrame.u32Width)*(stExtFrmInfo.stVFrame.u32Height)*3/2;
+				u32UvHeight = stExtFrmInfo.stVFrame.u32Height/2;
+		    }
+			mWidth = stExtFrmInfo.stVFrame.u32Width;
+			mHeight = stExtFrmInfo.stVFrame.u32Height;
+
+			phy_addr = stExtFrmInfo.stVFrame.u64PhyAddr[0];
+			pUserPageAddr[0] = (HI_CHAR *)HI_MPI_SYS_Mmap(phy_addr, size);
+            printf("#########size:%d\n",size);
+			if(HI_NULL == pUserPageAddr[0])
+		    {
+		        return NULL;
+		    }
+			
+			printf("YUV Frame Info --> RawData:[%d] Stride:[%d] Width:[%d] Height:[%d] Compress:[%d]\n",
+				yuv_buf[0],stExtFrmInfo.stVFrame.u32Stride[0],mWidth,mHeight,
+				stExtFrmInfo.stVFrame.enCompressMode);
+
+		    pVBufVirt_Y = pUserPageAddr[0];
+		    pVBufVirt_C = pVBufVirt_Y + (stExtFrmInfo.stVFrame.u32Stride[0]) * mHeight;
+			offset = 0;
+
+			//YUV420SP    --->   YUV420P
+		    /* save Y --------*/	
+			memcpy(yuv_buf, pVBufVirt_Y, mWidth*mHeight);
+			offset += mWidth*mHeight;
+
+		    /* save U -------*/   
+	        for(h = 0; h < u32UvHeight; h++)
+	        {
+	            pMemContent = pVBufVirt_C + h * stExtFrmInfo.stVFrame.u32Stride[1];
+
+	            // pMemContent += 1;
+
+	            for(w = 0; w < mWidth/2; w++)
+	            {
+	                TmpBuff[w] = *pMemContent;
+	                pMemContent += 2;
+	            }
+				memcpy(yuv_buf+offset, TmpBuff, mWidth/2);
+				offset += mWidth/2;
+	        }
+
+	        /* save V -------*/
+	        for(h = 0; h < u32UvHeight; h++)
+	        {
+	            pMemContent = pVBufVirt_C + h * stExtFrmInfo.stVFrame.u32Stride[1];
+
+                pMemContent += 1;
+
+	            for(w = 0; w < mWidth/2; w++)
+	            {
+	                TmpBuff[w] = *pMemContent;
+	                pMemContent += 2;
+	            }
+	            memcpy(yuv_buf+offset, TmpBuff, mWidth/2);
+				offset += mWidth/2;
+	        }
+
+		    HI_MPI_SYS_Munmap(pUserPageAddr[0], size);
+		    pUserPageAddr[0] = HI_NULL;
+
+
+            savecount++;
+			if(savecount == 5){
+				save_yuv(yuv_buf, mWidth, mHeight);
+			}
+          
+        
+    #endif
+
+
 
 
         /*VGS Draw rect*/
@@ -163,14 +286,14 @@ static HI_VOID *WK_YOLOV3_Detecting(HI_VOID *pArgs)
 {
     HI_S32 s32Ret;
 
-    struct timeval tv1;
-    struct timeval tv2;
-    long t1, t2, time;
+    // struct timeval tv1;
+    // struct timeval tv2;
+    // long t1, t2, time;
 
    
     while (HI_FALSE == s_bYOLOv3StopSignal)
     {
-        gettimeofday(&tv1, NULL);
+        // gettimeofday(&tv1, NULL);
 
         #if 1
         /*YOLOv3 Detecting*/
@@ -184,11 +307,11 @@ static HI_VOID *WK_YOLOV3_Detecting(HI_VOID *pArgs)
         }
         #endif
 
-        gettimeofday(&tv2, NULL);
-        t1 = tv2.tv_sec - tv1.tv_sec;
-        t2 = tv2.tv_usec - tv1.tv_usec;
-        time = (long) (t1 * 1000 + t2 / 1000);
-        printf("NNIE inference time : %dms\n", time);
+        // gettimeofday(&tv2, NULL);
+        // t1 = tv2.tv_sec - tv1.tv_sec;
+        // t2 = tv2.tv_usec - tv1.tv_usec;
+        // time = (long) (t1 * 1000 + t2 / 1000);
+        // printf("NNIE inference time : %dms\n", time);
        
        
     }
@@ -276,6 +399,7 @@ HI_S32 SAMPLE_COMM_IVE_StartViVpssVencVo_yolov3(SAMPLE_VI_CONFIG_S *pstViConfig,
     WDR_MODE_E 		enWDRMode 		= WDR_MODE_NONE;
     DYNAMIC_RANGE_E enDynamicRange 	= DYNAMIC_RANGE_SDR8;
     PIXEL_FORMAT_E 	enPixFormat 	= PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+    // PIXEL_FORMAT_E 	enPixFormat 	= PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     VIDEO_FORMAT_E 	enVideoFormat  	= VIDEO_FORMAT_LINEAR;
     COMPRESS_MODE_E enCompressMode 	= COMPRESS_MODE_NONE;
     VI_VPSS_MODE_E 	enMastPipeMode 	= VI_ONLINE_VPSS_OFFLINE;
@@ -304,15 +428,17 @@ HI_S32 SAMPLE_COMM_IVE_StartViVpssVencVo_yolov3(SAMPLE_VI_CONFIG_S *pstViConfig,
     pstViConfig->astViInfo[0].stChnInfo.enVideoFormat      = enVideoFormat;
     pstViConfig->astViInfo[0].stChnInfo.enCompressMode     = enCompressMode;
 
+    //&aenSize[0]是传感器与原图分辨率
     s32Ret = SAMPLE_COMM_VI_GetSizeBySensor(pstViConfig->astViInfo[s32WorkSnsId].stSnsInfo.enSnsType, &aenSize[0]);
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, END_INIT_0,
         "Error(%#x),SAMPLE_COMM_VI_GetSizeBySensor failed!\n",s32Ret);
-
+    //aenSize[1]是设置输入ｎｎｉｅ网络的分辨率　PIC_CIF:352*288; PIC_360P:640*480; PIC_D1_PAL:720*576
     aenSize[1] = *penExtPicSize; //SET THE YOLO PROCESS SIZE
 
     /******************************************
      step  1: Init vb
     ******************************************/
+    //根据上述两个分辨率aenSize[i]配置VPSS通道输出结果
     s32Ret = SAMPLE_COMM_IVE_VbInit_yolov3(aenSize,astSize,VPSS_CHN_NUM); //translate w and h
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, END_INIT_0,
         "Error(%#x),SAMPLE_COMM_IVE_VbInit failed!\n",s32Ret);
@@ -413,7 +539,22 @@ END_INIT_0:
 }
 
 
+// 定义一个延时xms毫秒的延时函数
+void delay(unsigned int xms)  // xms代表需要延时的毫秒数
+{
+    unsigned int x,y;
+    for(x=xms;x>0;x--)
+        for(y=110;y>0;y--);
+}
 
+static void *delayThread(void *pArgs)
+{
+    while (1)
+    {
+        // printf("=============== delayThread \n");
+        delay(50000);
+    }
+}
 
 
 /******************************************************************************
@@ -426,32 +567,32 @@ int main(int argc, char *argv[])
     signal(SIGTERM, SAMPLE_IVE_Kcf_HandleSig);
 
     const char *model_path = "./data/nnie_model/detection/inst_yolov3_cycle.wk";
+    // const char *model_path = "/mnt/sdcard/inst_yolov3_cycle.wk";
     HI_S32 s32Ret = HI_SUCCESS;
     HI_CHAR acThreadName[16] = {0};
     SIZE_S 	stSize;
-    //PIC_SIZE_E enSize = PIC_CIF;
-    PIC_SIZE_E enSize = {0};
-
+    PIC_SIZE_E enSize = PIC_CIF;
+    // PIC_SIZE_E enSize = {0};         //enSize是输入到nnie网络的下采样图片的分辨率PIC_CIF=/* 352 * 288 */，这个可以根据检测网络的需求变化
 
     /*Sys init*/
     SAMPLE_COMM_SVP_CheckSysInit(); //去初始化 MPP 系统->始化 MPP 系统
 
     /******************************************
-    step 1: start vi vpss vo
+    step 1: start vi vpss vo    配置输入ｎｎｉｅ网络的图片流
     ******************************************/
-    s_stYolov3Switch.bVenc = HI_FALSE;
-    s_stYolov3Switch.bVo   = HI_TRUE;
+    s_stYolov3Switch.bVenc = HI_FALSE;     //转码，关
+    s_stYolov3Switch.bVo   = HI_TRUE;      //输出ｖｏ，开
     
-    s32Ret = SAMPLE_COMM_IVE_StartViVpssVencVo_yolov3(&s_stViConfig,&s_stYolov3Switch,&enSize);
+    s32Ret = SAMPLE_COMM_IVE_StartViVpssVencVo_yolov3(&s_stViConfig,&s_stYolov3Switch,&enSize); //s_stViconfig=[0]，s_stYolov3Switch的vo输出开关，ensize是输入网络的分辨率
     SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, YOLOV3_FAIL_1,
         "Error(%#x),SAMPLE_COMM_IVE_StartViVpssVencVo failed!\n", s32Ret);
 
-    s32Ret = SAMPLE_COMM_SYS_GetPicSize(enSize, &stSize);
-    SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, YOLOV3_FAIL_1,
-        "Error(%#x),SAMPLE_COMM_SYS_GetPicSize failed!\n", s32Ret);
+    // s32Ret = SAMPLE_COMM_SYS_GetPicSize(enSize, &stSize);
+    // SAMPLE_CHECK_EXPR_GOTO(HI_SUCCESS != s32Ret, YOLOV3_FAIL_1,
+    //     "Error(%#x),SAMPLE_COMM_SYS_GetPicSize failed!\n", s32Ret);
 
-	stSize.u32Width  = 416;
-	stSize.u32Height = 416;
+	// stSize.u32Width  = 416;
+	// stSize.u32Height = 416;
 
     /******************************************
     step 2: init YOLO NNIE param
@@ -484,7 +625,9 @@ int main(int argc, char *argv[])
     pthread_create(&s_Yolov3_Detect_Thread, 0, WK_YOLOV3_Detecting, NULL);
 
     
-
+    snprintf(acThreadName, 16, "delayThread");
+    prctl(PR_SET_NAME, (unsigned long)acThreadName, 0, 0, 0);
+    pthread_create(&s_delay_Thread, 0, delayThread, NULL);
 
     SAMPLE_PAUSE();
 
@@ -495,6 +638,9 @@ int main(int argc, char *argv[])
     s_VIVO_HDMI_Show_Thread = 0;
 
     pthread_join(s_Yolov3_Detect_Thread, NULL);
+    s_Yolov3_Detect_Thread = 0;
+
+    pthread_join(s_delay_Thread, NULL);
     s_Yolov3_Detect_Thread = 0;
 
 
@@ -529,9 +675,15 @@ void SAMPLE_IVE_Kcf_HandleSig(HI_S32 s32Signo)
             s_Yolov3_Detect_Thread = 0;
         }
 
-         if (0 != s_bVIVOStopSignal)
+        if (0 != s_bVIVOStopSignal)
         {
-            pthread_join(s_bVIVOStopSignal, NULL);
+            pthread_join(s_VIVO_HDMI_Show_Thread, NULL);
+            s_bVIVOStopSignal = 0;
+        }
+
+        if (0 != s_bVIVOStopSignal)
+        {
+            pthread_join(s_delay_Thread, NULL);
             s_bVIVOStopSignal = 0;
         }
         wk_yolov3_clear();

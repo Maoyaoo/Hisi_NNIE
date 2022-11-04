@@ -1,5 +1,31 @@
 #include "yolov3_core.h"
 
+
+char *cls_names[] = {"background", "person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck",
+                        "boat",
+
+                        "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog",
+                        "horse", "sheep",
+
+                        "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie",
+                        "suitcase",
+
+                        "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove",
+                        "skateboard", "surfboard", "tennis racket",
+
+                        "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "donut", "apple", "sandwich",
+
+                        "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "sofa",
+                        "pottedplant",
+
+                        "bed", "diningtable", "toilet", "vmonitor", "laptop", "mouse", "remote", "keyboard",
+                        "cell phone", "microwave",
+
+                        "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
+                        "hair drier", "toothbrush"};
+
+
+
 /******************************************************************************
 * function : Yolov3 software para init
 ******************************************************************************/
@@ -18,16 +44,17 @@ static HI_S32 SAMPLE_SVP_NNIE_Yolov3_SoftwareInit(SAMPLE_SVP_NNIE_CFG_S* pstCfg,
 
     pstSoftWareParam->u32OriImHeight = pstNnieParam->astSegData[0].astSrc[0].unShape.stWhc.u32Height;
     pstSoftWareParam->u32OriImWidth = pstNnieParam->astSegData[0].astSrc[0].unShape.stWhc.u32Width;
-    pstSoftWareParam->u32BboxNumEachGrid = 3;
-    pstSoftWareParam->u32ClassNum = 80;
+    pstSoftWareParam->u32BboxNumEachGrid = 3;       //一个grid产生3个bbox
+    pstSoftWareParam->u32ClassNum = 80;             //检测网路的识别类别，不同检测网络类别不一样
+    //三种grid的划分方法，以检测小物体
     pstSoftWareParam->au32GridNumHeight[0] = 13;
     pstSoftWareParam->au32GridNumHeight[1] = 26;
     pstSoftWareParam->au32GridNumHeight[2] = 52;
     pstSoftWareParam->au32GridNumWidth[0] = 13;
     pstSoftWareParam->au32GridNumWidth[1] = 26;
     pstSoftWareParam->au32GridNumWidth[2] = 52;
-    pstSoftWareParam->u32NmsThresh = (HI_U32)(0.3f*SAMPLE_SVP_NNIE_QUANT_BASE);
-    pstSoftWareParam->u32ConfThresh = (HI_U32)(0.5f*SAMPLE_SVP_NNIE_QUANT_BASE);
+    pstSoftWareParam->u32NmsThresh = (HI_U32)(0.3f*SAMPLE_SVP_NNIE_QUANT_BASE);   // NMS阈值
+    pstSoftWareParam->u32ConfThresh = (HI_U32)(0.5f*SAMPLE_SVP_NNIE_QUANT_BASE);  //物体置信度阈值
     pstSoftWareParam->u32MaxRoiNum = 10;
     pstSoftWareParam->af32Bias[0][0] = 116;
     pstSoftWareParam->af32Bias[0][1] = 90;
@@ -318,32 +345,13 @@ static HI_S32 SAMPLE_SVP_NNIE_Forward(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,
 }
 
 
-/******************************************************************************
-* function : roi to rect
-******************************************************************************/
-HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
+
+HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3_Test(SVP_BLOB_S *pstDstScore,
     SVP_BLOB_S *pstDstRoi, SVP_BLOB_S *pstClassRoiNum, HI_FLOAT pf32GetResultThresh,
     HI_BOOL bPrint,WK_YOLO_RECT_ARRAY_S *pstRect,
     HI_U32 u32SrcWidth, HI_U32 u32SrcHeight)
 {
-    /*print result, this sample has 81 classes:
-        class 0:background      class 1:person       class 2:bicycle         class 3:car            class 4:motorbike      class 5:aeroplane
-        class 6:bus             class 7:train        class 8:truck           class 9:boat           class 10:traffic light
-        class 11:fire hydrant   class 12:stop sign   class 13:parking meter  class 14:bench         class 15:bird
-        class 16:cat            class 17:dog         class 18:horse          class 19:sheep         class 20:cow
-        class 21:elephant       class 22:bear        class 23:zebra          class 24:giraffe       class 25:backpack
-        class 26:umbrella       class 27:handbag     class 28:tie            class 29:suitcase      class 30:frisbee
-        class 31:skis           class 32:snowboard   class 33:sports ball    class 34:kite          class 35:baseball bat
-        class 36:baseball glove class 37:skateboard  class 38:surfboard      class 39:tennis racket class 40bottle
-        class 41:wine glass     class 42:cup         class 43:fork           class 44:knife         class 45:spoon
-        class 46:bowl           class 47:banana      class 48:apple          class 49:sandwich      class 50orange
-        class 51:broccoli       class 52:carrot      class 53:hot dog        class 54:pizza         class 55:donut
-        class 56:cake           class 57:chair       class 58:sofa           class 59:pottedplant   class 60bed
-        class 61:diningtable    class 62:toilet      class 63:vmonitor       class 64:laptop        class 65:mouse
-        class 66:remote         class 67:keyboard    class 68:cell phone     class 69:microwave     class 70:oven
-        class 71:toaster        class 72:sink        class 73:refrigerator   class 74:book          class 75:clock
-        class 76:vase           class 77:scissors    class 78:teddy bear     class 79:hair drier    class 80:toothbrush*/
-    HI_U32 i = 0, j = 0;
+        HI_U32 i = 0, j = 0;
     HI_U32 u32RoiNumBias = 0;
     HI_U32 u32ScoreBias = 0;
     HI_U32 u32BboxBias = 0;
@@ -427,10 +435,101 @@ HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
     }
     
     return HI_SUCCESS;
+
+
 }
 
 
 
+
+/******************************************************************************
+* function : roi to rect
+******************************************************************************/
+HI_S32 SAMPLE_SVP_NNIE_RoiToRect_Yolov3(SVP_BLOB_S *pstDstScore,
+    SVP_BLOB_S *pstDstRoi, SVP_BLOB_S *pstClassRoiNum, HI_FLOAT pf32GetResultThresh,
+    HI_BOOL bPrint,WK_YOLO_RECT_ARRAY_S *pstRect,
+    HI_U32 u32SrcWidth, HI_U32 u32SrcHeight)
+{
+    HI_U32 i = 0, j = 0;
+    HI_U32 u32RoiNumBias = 0;
+    HI_U32 u32ScoreBias = 0;
+    HI_U32 u32BboxBias = 0;
+    HI_FLOAT f32Score = 0.0f;
+    HI_S32* ps32Score = SAMPLE_SVP_NNIE_CONVERT_64BIT_ADDR(HI_S32,pstDstScore->u64VirAddr);
+    HI_S32* ps32Roi = SAMPLE_SVP_NNIE_CONVERT_64BIT_ADDR(HI_S32,pstDstRoi->u64VirAddr);
+    HI_S32* ps32ClassRoiNum = SAMPLE_SVP_NNIE_CONVERT_64BIT_ADDR(HI_S32,pstClassRoiNum->u64VirAddr);
+    HI_U32 u32ClassNum = pstClassRoiNum->unShape.stWhc.u32Width;
+    HI_S32 s32XMin = 0,s32YMin= 0,s32XMax = 0,s32YMax = 0;
+    // HI_FLOAT s32XMin = 0,s32YMin= 0,s32XMax = 0,s32YMax = 0;
+
+    // SAMPLE_SVP_CHECK_EXPR_RET(u32ClassNum > WK_YOLOV3_MAX_CLASS_NUM ,HI_ERR_SVP_NNIE_ILLEGAL_PARAM,SAMPLE_SVP_ERR_LEVEL_ERROR,
+    //     "Error(%#x),u32ClassNum(%u) must be less than or equal %u to!\n",HI_ERR_SVP_NNIE_ILLEGAL_PARAM,u32ClassNum, WK_YOLOV3_MAX_CLASS_NUM);
+ 
+    memset(pstRect,0x00,sizeof(WK_YOLO_RECT_ARRAY_S));  //初始化结果返回变量
+    // pstRect->u32TotalNum = 0;            /*init tolalNum*/
+    pstRect->u32ClsNum = u32ClassNum;    /*get class Num*/
+    // pstRect->au32RoiNum[0] = 0;          /*init ROINum for etch class*/
+    u32RoiNumBias += ps32ClassRoiNum[0];
+
+    for (i = 1; i < u32ClassNum; i++)
+    {
+        u32ScoreBias = u32RoiNumBias;
+        u32BboxBias = u32RoiNumBias * SAMPLE_SVP_NNIE_COORDI_NUM;
+
+        /*if the confidence score greater than result thresh, the result will be drawed*/
+        if(((HI_FLOAT)ps32Score[u32ScoreBias] / SAMPLE_SVP_NNIE_QUANT_BASE >= pf32GetResultThresh)  &&  (ps32ClassRoiNum[i] != 0))
+        { 
+            printf("==== Class is:  %s ====\n", cls_names[i]);
+            printf("==== Total NUM: %d ====\n",ps32ClassRoiNum[i]);
+            printf("\n\n");
+        }
+        for (j = 0; j < (HI_U32)ps32ClassRoiNum[i]; j++)
+        {
+            /*Score is descend order*/
+            f32Score = (HI_FLOAT)ps32Score[u32ScoreBias + j] / SAMPLE_SVP_NNIE_QUANT_BASE;
+            if ((f32Score < pf32GetResultThresh))
+            {
+                break;
+            }
+        
+            s32XMin = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM];
+            s32YMin = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 1];
+            s32XMax = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 2];
+            s32YMax = ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 3];
+            
+            // s32XMin = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM] / (HI_FLOAT)u32SrcWidth ;
+            // s32YMin = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 1] / (HI_FLOAT)u32SrcHeight;
+            // s32XMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 2] / (HI_FLOAT)u32SrcWidth;
+            // s32YMax = (HI_FLOAT)ps32Roi[u32BboxBias + j*SAMPLE_SVP_NNIE_COORDI_NUM + 3] / (HI_FLOAT)u32SrcHeight;
+
+            pstRect->astRect[i][j].stRect.stRect_f.fX = (HI_FLOAT)s32XMin / (HI_FLOAT)u32SrcWidth;
+            pstRect->astRect[i][j].stRect.stRect_f.fY = (HI_FLOAT)s32YMin / (HI_FLOAT)u32SrcHeight;
+            pstRect->astRect[i][j].stRect.stRect_f.fWidth = (HI_FLOAT)(s32XMax - s32XMin) / (HI_FLOAT)u32SrcWidth;
+            pstRect->astRect[i][j].stRect.stRect_f.fHeight = (HI_FLOAT)(s32YMax - s32YMin) / (HI_FLOAT)u32SrcHeight;
+            pstRect->astRect[i][j].f32Score = f32Score;    
+
+            /*print result*/
+            if (bPrint)  
+            { 
+                printf("====================\n");
+                /*打印正常坐标Xmin，Ymin，XMax，YMax*/
+                printf("s32XMin:%d \ns32YMin:%d \ns32XMax:%d \ns32YMax:%d \nf32Score:%f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
+                
+                /*打印归一化X，Y，W，H*/
+                // printf("fx:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fX);
+                // printf("fy:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fY);
+                // printf("fw:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fWidth);
+                // printf("fh:%f\n",pstRect->astRect[i][u32RoiNumTmp].stRect.stRect_f.fHeight);
+                printf("====================\n");
+                //SAMPLE_SVP_TRACE_INFO("%f %f %f %f %f\n", s32XMin, s32YMin, s32XMax, s32YMax, f32Score);
+            }
+        }
+        pstRect->au32RoiNum[i] = (HI_U32)ps32ClassRoiNum[i];
+        pstRect->u32TotalNum += (HI_U32)ps32ClassRoiNum[i];
+        u32RoiNumBias += ps32ClassRoiNum[i];
+    }
+    return HI_SUCCESS;
+}
 
 
 int yolov3_param_deinit(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,
@@ -473,7 +572,7 @@ int yolov3_param_init(SAMPLE_SVP_NNIE_MODEL_S *pstModel, SAMPLE_SVP_NNIE_CFG_S *
     pstCfg->u32MaxRoiNum = 0;
     pstCfg->aenNnieCoreId[0] = SVP_NNIE_ID_0;//set NNIE core
 
-
+    //初始化软硬件参数，硬件参数基本不变，软件参数需要修改
     /*Yolov3 parameter initialization*/
     /*Yolov3 software parameters are set in SAMPLE_SVP_NNIE_Yolov3_SoftwareInit,
       if user has changed net struct, please make sure the parameter settings in
@@ -500,21 +599,27 @@ int yolov3_param_init(SAMPLE_SVP_NNIE_MODEL_S *pstModel, SAMPLE_SVP_NNIE_CFG_S *
 int yolov3_inference(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,SAMPLE_SVP_NNIE_YOLOV3_SOFTWARE_PARAM_S *pstSoftWareParam, VIDEO_FRAME_INFO_S *pstExtFrmInfo,
          WK_YOLO_RECT_ARRAY_S *pstRect)
 {
+    /*****************获取推理图像大小***********************/
     HI_U32 u32BaseWidth = 0;
     HI_U32 u32BaseHeight = 0;
     u32BaseWidth = pstExtFrmInfo->stVFrame.u32Width;
     u32BaseHeight = pstExtFrmInfo->stVFrame.u32Height;
     // printf("###u32W:%d\n",u32BaseWidth);
     // printf("###u32H:%d\n",u32BaseHeight);
+    /*****************************************************/
 
     HI_S32 s32Ret = HI_FAILURE;
     HI_FLOAT f32GetResultThresh = 0.2f;
-    SAMPLE_SVP_NNIE_INPUT_DATA_INDEX_S stInputDataIdx = {0};
-    SAMPLE_SVP_NNIE_PROCESS_SEG_INDEX_S stProcSegIdx = {0};
+    // HI_FLOAT f32GetResultThresh = 0.8f;
+    SAMPLE_SVP_NNIE_INPUT_DATA_INDEX_S stInputDataIdx = {0};   //数据填充网络索引
+    SAMPLE_SVP_NNIE_PROCESS_SEG_INDEX_S stProcSegIdx = {0};    //推理过程中因为不支持层索引
 
-    stInputDataIdx.u32SegIdx = 0;
-    stInputDataIdx.u32NodeIdx = 0;
+    //Fill SRC data
+    //初始输入图片的节点，０段的第０层
+    stInputDataIdx.u32SegIdx = 0;   //段索引
+    stInputDataIdx.u32NodeIdx = 0;  //层节点索引
     /*SP420*/
+    //储存在pstExtFrmInfo里的vpss图片帧，放入硬件配置的输入地址里
     pstNnieParam->astSegData[stInputDataIdx.u32SegIdx].astSrc[stInputDataIdx.u32NodeIdx].u64VirAddr = pstExtFrmInfo->stVFrame.u64VirAddr[0];
     pstNnieParam->astSegData[stInputDataIdx.u32SegIdx].astSrc[stInputDataIdx.u32NodeIdx].u64PhyAddr = pstExtFrmInfo->stVFrame.u64PhyAddr[0];
     pstNnieParam->astSegData[stInputDataIdx.u32SegIdx].astSrc[stInputDataIdx.u32NodeIdx].u32Stride  = pstExtFrmInfo->stVFrame.u32Stride[0];
@@ -528,9 +633,10 @@ int yolov3_inference(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,SAMPLE_SVP_NNIE_YOLOV
         return s32Ret;
     }
     
-    /*Software process*/
+    /*Software process*///不支持层处理
     /*if user has changed net struct, please make sure SAMPLE_SVP_NNIE_Yolov3_GetResult
      function input datas are correct*/
+    //这星把硬件配置pstNnieParam输出的结果，通过自定义的NMS层计算出ROI信息，并将其控取到软件配置中pstSoftWareParam
     s32Ret = SAMPLE_SVP_NNIE_Yolov3_GetResult(pstNnieParam,pstSoftWareParam);
     if(HI_SUCCESS != s32Ret)
     {
@@ -539,24 +645,7 @@ int yolov3_inference(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,SAMPLE_SVP_NNIE_YOLOV
     }
 
     #if 0
-    SAMPLE_SVP_NNIE_Detection_Result_to_rect(&pstSoftWareParam->stDstScore,
-												&pstSoftWareParam->stDstRoi,
-												&pstSoftWareParam->stClassRoiNum,
-												f32PrintResultThresh,
-												pstRect);
-    #endif
-
-
-    #if 0
-    s32Ret = yolov3_print_result(pstSoftWareParam);
-    if(HI_SUCCESS != s32Ret)
-    {
-        SAMPLE_PRT("Error(%#x),Error,yolov3_print_result failed!\n", s32Ret);
-        return s32Ret;
-    }
-    #endif
-
-    s32Ret = SAMPLE_SVP_NNIE_RoiToRect_Yolov3(&(pstSoftWareParam->stDstScore),
+    s32Ret = SAMPLE_SVP_NNIE_RoiToRect_Yolov3_Test(&(pstSoftWareParam->stDstScore),
                                             &(pstSoftWareParam->stDstRoi), 
                                             &(pstSoftWareParam->stClassRoiNum),
                                             f32GetResultThresh,
@@ -565,40 +654,19 @@ int yolov3_inference(SAMPLE_SVP_NNIE_PARAM_S *pstNnieParam,SAMPLE_SVP_NNIE_YOLOV
                                             u32BaseWidth,
                                             u32BaseHeight);
 
+    #endif
+
+    #if 1
+    s32Ret = SAMPLE_SVP_NNIE_RoiToRect_Yolov3(&(pstSoftWareParam->stDstScore),
+                                            &(pstSoftWareParam->stDstRoi), 
+                                            &(pstSoftWareParam->stClassRoiNum),
+                                            f32GetResultThresh,
+                                            HI_TRUE,
+                                            pstRect,
+                                            u32BaseWidth,
+                                            u32BaseHeight);
+    #endif
     SAMPLE_SVP_CHECK_EXPR_RET(HI_SUCCESS != s32Ret,s32Ret,SAMPLE_SVP_ERR_LEVEL_ERROR,"Error(%#x),SAMPLE_SVP_NNIE_RoiToRect_Yolov3 failed!\n",s32Ret);
 
     return s32Ret;
 }
-
-#if 0
-/*Get result*/
-int yolov3_print_result(SAMPLE_SVP_NNIE_YOLOV3_SOFTWARE_PARAM_S *pstSoftWareParam)
-{
-    HI_S32 s32Ret;
-    HI_FLOAT f32PrintResultThresh = 0.0f;
-    f32PrintResultThresh = 0.8f;
-    /*print result, this sample has 81 classes:
-        class 0:background      class 1:person       class 2:bicycle         class 3:car            class 4:motorbike      class 5:aeroplane
-        class 6:bus             class 7:train        class 8:truck           class 9:boat           class 10:traffic light
-        class 11:fire hydrant   class 12:stop sign   class 13:parking meter  class 14:bench         class 15:bird
-        class 16:cat            class 17:dog         class 18:horse          class 19:sheep         class 20:cow
-        class 21:elephant       class 22:bear        class 23:zebra          class 24:giraffe       class 25:backpack
-        class 26:umbrella       class 27:handbag     class 28:tie            class 29:suitcase      class 30:frisbee
-        class 31:skis           class 32:snowboard   class 33:sports ball    class 34:kite          class 35:baseball bat
-        class 36:baseball glove class 37:skateboard  class 38:surfboard      class 39:tennis racket class 40bottle
-        class 41:wine glass     class 42:cup         class 43:fork           class 44:knife         class 45:spoon
-        class 46:bowl           class 47:banana      class 48:apple          class 49:sandwich      class 50orange
-        class 51:broccoli       class 52:carrot      class 53:hot dog        class 54:pizza         class 55:donut
-        class 56:cake           class 57:chair       class 58:sofa           class 59:pottedplant   class 60bed
-        class 61:diningtable    class 62:toilet      class 63:vmonitor       class 64:laptop        class 65:mouse
-        class 66:remote         class 67:keyboard    class 68:cell phone     class 69:microwave     class 70:oven
-        class 71:toaster        class 72:sink        class 73:refrigerator   class 74:book          class 75:clock
-        class 76:vase           class 77:scissors    class 78:teddy bear     class 79:hair drier    class 80:toothbrush*/
-
-    printf("=========== return Yolov3 result ===========\n");
-    (void)SAMPLE_SVP_NNIE_Detection_PrintResult(&pstSoftWareParam->stDstScore,
-        &pstSoftWareParam->stDstRoi, &pstSoftWareParam->stClassRoiNum,f32PrintResultThresh);
-
-    return s32Ret;
-}
-#endif

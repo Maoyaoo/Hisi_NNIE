@@ -11,7 +11,9 @@
         "wk_kcf.h": "c",
         "core.hpp": "c",
         "vector": "cpp",
-        "highgui.hpp": "c"
+        "highgui.hpp": "c",
+        "wk_sot_thread.h": "c",
+        "wk_sot_queue.h": "c"
     }
 }
 

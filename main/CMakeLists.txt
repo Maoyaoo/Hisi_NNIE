@@ -46,7 +46,8 @@ TARGET_LINK_LIBRARIES(kf_yolov3_Exe pthread dl m
 # For SOT
 SET(SOURCES
     ./sot_main.c
-    ./sot_thread.c
+    ./wk_sot_thread.c
+    ./wk_sot_queue.c
 )
 
 ADD_EXECUTABLE(sot_Exe ${SOURCES})

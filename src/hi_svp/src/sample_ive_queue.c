@@ -101,6 +101,7 @@ HI_S32 SAMPLE_IVE_QueueSize(SAMPLE_IVE_QUEUE_S* pstQueueHead)
 	return s_s32CurQueueLen;
 }
 
+
 HI_S32 SAMPLE_IVE_QueueAddNode(SAMPLE_IVE_QUEUE_S* pstQueueHead, VIDEO_FRAME_INFO_S *pstFrameInfo)
 {
 	SAMPLE_IVE_NODE_S *pstQueueNode = NULL;

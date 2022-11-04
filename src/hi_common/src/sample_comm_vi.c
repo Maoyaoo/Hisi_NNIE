@@ -354,6 +354,43 @@ combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX335_10BIT_4M_WDR2TO1_ATTR =
     }
 };
 
+//add
+combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX378_10BIT_8M_NOWDR_ATTR =
+{
+    .devno = 0,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 0, 3840, 2160},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_10BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {0, 1, 2, 3}
+        }
+    }
+};
+//add
+combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_IMX378_12BIT_8M_NOWDR_ATTR =
+{
+    .devno = 0,
+    .input_mode = INPUT_MODE_MIPI,
+    .data_rate = MIPI_DATA_RATE_X1,
+    .img_rect = {0, 0, 3840, 2160},
+
+    {
+        .mipi_attr =
+        {
+            DATA_TYPE_RAW_12BIT,
+            HI_MIPI_WDR_MODE_NONE,
+            {0, 1, 2, 3}
+        }
+    }
+};
+
+
+
 combo_dev_attr_t MIPI_4lane_CHN0_SENSOR_SC4210_12BIT_3M_NOWDR_ATTR =
 {
     .devno = 0,
@@ -857,6 +894,91 @@ VI_DEV_ATTR_S DEV_ATTR_IMX335_4M_BASE =
     },
     DATA_RATE_X1
 };
+
+
+//add
+VI_DEV_ATTR_S DEV_ATTR_IMX378_8M_BASE_10BIT =
+{
+    VI_MODE_MIPI,
+    VI_WORK_MODE_1Multiplex,
+    {0xFFC00000,    0x0},
+    VI_SCAN_PROGRESSIVE,
+    { -1, -1, -1, -1},
+    VI_DATA_SEQ_YUYV,
+
+    {
+        /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
+        VI_VSYNC_PULSE, VI_VSYNC_NEG_LOW, VI_HSYNC_VALID_SINGNAL, VI_HSYNC_NEG_HIGH, VI_VSYNC_VALID_SINGAL, VI_VSYNC_VALID_NEG_HIGH,
+
+        /*hsync_hfb    hsync_act    hsync_hhb*/
+        {
+            0,            1280,        0,
+            /*vsync0_vhb vsync0_act vsync0_hhb*/
+            0,            720,        0,
+            /*vsync1_vhb vsync1_act vsync1_hhb*/
+            0,            0,            0
+        }
+    },
+    VI_DATA_TYPE_RGB,
+    HI_FALSE,
+    {3840 , 2160},
+    {
+        {
+            {3840 , 2160},
+        },
+        {
+            VI_REPHASE_MODE_NONE,
+            VI_REPHASE_MODE_NONE
+        }
+    },
+    {
+        WDR_MODE_NONE,
+        2160
+    },
+    DATA_RATE_X1
+};
+
+VI_DEV_ATTR_S DEV_ATTR_IMX378_8M_BASE_12BIT =
+{
+    VI_MODE_MIPI,
+    VI_WORK_MODE_1Multiplex,
+    {0xFFF00000,    0x0},
+    VI_SCAN_PROGRESSIVE,
+    { -1, -1, -1, -1},
+    VI_DATA_SEQ_YUYV,
+
+    {
+        /*port_vsync   port_vsync_neg     port_hsync        port_hsync_neg        */
+        VI_VSYNC_PULSE, VI_VSYNC_NEG_LOW, VI_HSYNC_VALID_SINGNAL, VI_HSYNC_NEG_HIGH, VI_VSYNC_VALID_SINGAL, VI_VSYNC_VALID_NEG_HIGH,
+
+        /*hsync_hfb    hsync_act    hsync_hhb*/
+        {
+            0,            1280,        0,
+            /*vsync0_vhb vsync0_act vsync0_hhb*/
+            0,            720,        0,
+            /*vsync1_vhb vsync1_act vsync1_hhb*/
+            0,            0,            0
+        }
+    },
+    VI_DATA_TYPE_RGB,
+    HI_FALSE,
+    {3840 , 2160},
+    {
+        {
+            {3840 , 2160},
+        },
+        {
+            VI_REPHASE_MODE_NONE,
+            VI_REPHASE_MODE_NONE
+        }
+    },
+    {
+        WDR_MODE_NONE,
+        2160
+    },
+    DATA_RATE_X1
+};
+
 
 VI_DEV_ATTR_S DEV_ATTR_SC4210_3M_BASE =
 {
@@ -2388,6 +2510,14 @@ HI_S32 SAMPLE_COMM_VI_GetComboAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, combo_dev_t
         case SONY_IMX335_MIPI_4M_30FPS_10BIT_WDR2TO1:
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX335_10BIT_4M_WDR2TO1_ATTR, sizeof(combo_dev_attr_t));
             break;
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:
+            #ifdef IMX378_FORMAT_RGB_BAYER_10BPP
+            memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX378_10BIT_8M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            #else
+            memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_IMX378_12BIT_8M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
+            #endif
+            break;
 
         case SMART_SC4210_MIPI_3M_30FPS_12BIT:
             memcpy_s(pstComboAttr, sizeof(combo_dev_attr_t), &MIPI_4lane_CHN0_SENSOR_SC4210_12BIT_3M_NOWDR_ATTR, sizeof(combo_dev_attr_t));
@@ -2833,6 +2963,14 @@ HI_S32 SAMPLE_COMM_VI_GetDevAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_DEV_ATTR_S
             memcpy_s(pstViDevAttr, sizeof(VI_DEV_ATTR_S), &DEV_ATTR_IMX335_4M_BASE, sizeof(VI_DEV_ATTR_S));
             pstViDevAttr->au32ComponentMask[0] = 0xFFC00000;
             break;
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:
+            #ifdef IMX378_FORMAT_RGB_BAYER_10BPP
+            memcpy(pstViDevAttr, &DEV_ATTR_IMX378_8M_BASE_10BIT, sizeof(VI_DEV_ATTR_S));
+            #else
+            memcpy(pstViDevAttr, &DEV_ATTR_IMX378_8M_BASE_12BIT, sizeof(VI_DEV_ATTR_S));
+            #endif
+            break;
 
         case SMART_SC4210_MIPI_3M_30FPS_12BIT:
         case SMART_SC4210_MIPI_3M_30FPS_10BIT_WDR2TO1:
@@ -2952,6 +3090,16 @@ HI_S32 SAMPLE_COMM_VI_GetPipeAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_PIPE_ATTR
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_2592x1536_RAW10_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
             break;
 
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:
+            #ifdef IMX378_FORMAT_RGB_BAYER_10BPP
+            memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_3840x2160_RAW10_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
+            #else
+            memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_3840x2160_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
+            #endif
+            break;
+
+
         case SMART_SC4210_MIPI_3M_30FPS_12BIT:
             memcpy_s(pstPipeAttr, sizeof(VI_PIPE_ATTR_S), &PIPE_ATTR_2560x1440_RAW12_420_3DNR_RFR, sizeof(VI_PIPE_ATTR_S));
             break;
@@ -3050,6 +3198,20 @@ HI_S32 SAMPLE_COMM_VI_GetChnAttrBySns(SAMPLE_SNS_TYPE_E enSnsType, VI_CHN_ATTR_S
         case SONY_IMX335_MIPI_4M_30FPS_10BIT_WDR2TO1:
             memcpy_s(pstChnAttr, sizeof(VI_CHN_ATTR_S), &CHN_ATTR_2592x1536_420_SDR8_LINEAR, sizeof(VI_CHN_ATTR_S));
             break;
+
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:
+            memcpy_s(pstChnAttr, sizeof(VI_CHN_ATTR_S), &CHN_ATTR_3840x2160_420_SDR8_LINEAR, sizeof(VI_CHN_ATTR_S));
+            //walkera set image flip and mirror
+        #if 0
+            pstChnAttr->bMirror = HI_TRUE; //imx415 HI_TRUE;
+            pstChnAttr->bFlip = HI_TRUE; //imx415 HI_TRUE;
+        #else
+            pstChnAttr->bMirror = HI_FALSE; //imx378 HI_TRUE;
+            pstChnAttr->bFlip = HI_FALSE; //imx378 HI_TRUE;
+        #endif
+            break;
+
 
         case SMART_SC4210_MIPI_3M_30FPS_12BIT:
         case SMART_SC4210_MIPI_3M_30FPS_10BIT_WDR2TO1:
@@ -4479,6 +4641,9 @@ HI_S32 SAMPLE_COMM_VI_GetSizeBySensor(SAMPLE_SNS_TYPE_E enMode, PIC_SIZE_E* penS
             *penSize = PIC_2592x1536;
             break;
 
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:
+
         case SMART_SC4210_MIPI_3M_30FPS_12BIT:
         case SMART_SC4210_MIPI_3M_30FPS_10BIT_WDR2TO1:
             *penSize = PIC_2560x1440;
@@ -4551,6 +4716,8 @@ HI_S32 SAMPLE_COMM_VI_GetFrameRateBySensor(SAMPLE_SNS_TYPE_E enMode, HI_U32* pu3
         case SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1:
         case SONY_IMX335_MIPI_4M_30FPS_12BIT:
         case SONY_IMX335_MIPI_4M_30FPS_10BIT_WDR2TO1:
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:
         case SMART_SC4210_MIPI_3M_30FPS_12BIT:
         case SMART_SC4210_MIPI_3M_30FPS_10BIT_WDR2TO1:
         case PANASONIC_MN34220_LVDS_2M_30FPS_12BIT:
@@ -4634,6 +4801,8 @@ combo_dev_t SAMPLE_COMM_VI_GetComboDevBySensor(SAMPLE_SNS_TYPE_E enMode, HI_S32 
         case SONY_IMX335_MIPI_5M_30FPS_10BIT_WDR2TO1:
         case SONY_IMX335_MIPI_4M_30FPS_12BIT:
         case SONY_IMX335_MIPI_4M_30FPS_10BIT_WDR2TO1:
+        //add
+        case SONY_IMX378_MIPI_8M_30FPS_10BIT:  
         case SONY_IMX458_MIPI_8M_30FPS_10BIT:
         case SONY_IMX458_MIPI_12M_20FPS_10BIT:
         case SONY_IMX458_MIPI_4M_60FPS_10BIT:

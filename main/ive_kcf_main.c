@@ -316,6 +316,7 @@ HI_S32 SAMPLE_COMM_IVE_StartViVpssVencVo_yolov3(SAMPLE_VI_CONFIG_S *pstViConfig,
     VIDEO_FORMAT_E 	enVideoFormat  	= VIDEO_FORMAT_LINEAR;
     COMPRESS_MODE_E enCompressMode 	= COMPRESS_MODE_NONE;
     VI_VPSS_MODE_E 	enMastPipeMode 	= VI_ONLINE_VPSS_OFFLINE;
+    // VI_VPSS_MODE_E 	enMastPipeMode 	= VI_OFFLINE_VPSS_OFFLINE;
 
     memset(pstViConfig,0,sizeof(*pstViConfig));
 

@@ -11,6 +11,7 @@ extern "C" {
 
 
 
+
 /*input model path*/
 int wk_yolov3_load_model(const char *model_path);
 
